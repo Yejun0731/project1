@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 24.8.1.2 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="00:00:00"/>
+	<style type="text/css">
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		p { line-height: 115%; margin-bottom: 0.1in; background: transparent }
+		pre { background: transparent }
+		pre.western { font-family: "Liberation Mono", monospace; font-size: 10pt }
+		pre.cjk { font-family: "NSimSun", monospace; font-size: 10pt }
+		pre.ctl { font-family: "Liberation Mono", monospace; font-size: 10pt }
+	</style>
+</head>
+<body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><pre class="western">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;ko&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;<font face="NSimSun, monospace"><span lang="zh-CN">비트 세포막 투과성 분석 도구 </span></font>(<font face="NSimSun, monospace"><span lang="zh-CN">시간별 사진 분석</span></font>)&lt;/title&gt;
+    &lt;script src=&quot;https://cdn.tailwindcss.com&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/chart.js&quot;&gt;&lt;/script&gt;
+    &lt;style&gt;
+        #canvas-container {
+            position: relative;
+            cursor: crosshair;
+            max-width: 100%;
+            overflow: hidden;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
+            background-color: #f8fafc;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        .temp-selection {
+            position: absolute;
+            border: 2px dashed #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+            pointer-events: none;
+            z-index: 10;
+        }
+        .fixed-selection {
+            position: absolute;
+            border: 2px solid;
+            background-color: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            z-index: 5;
+        }
+        .selection-label {
+            position: absolute;
+            top: -20px;
+            left: -2px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 2px 2px 0 0;
+            white-space: nowrap;
+        }
+        .data-cell {
+            min-width: 60px;
+            text-align: center;
+        }
+        .data-value {
+            display: block;
+            width: 100%;
+            height: 100%;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .data-value:hover {
+            background-color: #fee2e2;
+            color: #be123c;
+            text-decoration: line-through;
+        }
+        .slot-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-slate-50 min-h-screen p-4 md:p-8&quot;&gt;
+    &lt;div class=&quot;max-w-7xl mx-auto&quot;&gt;
+        &lt;header class=&quot;mb-8 text-center&quot;&gt;
+            &lt;h1 class=&quot;text-3xl font-bold text-slate-800&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">비트 세포막 투과성 분석기</span></font>&lt;/h1&gt;
+            &lt;p class=&quot;text-slate-600 mt-2&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">시간대별 사진 탭을 클릭하여 데이터를 분석하세요</span></font>.&lt;/p&gt;
+        &lt;/header&gt;
+
+        &lt;div class=&quot;grid grid-cols-1 lg:grid-cols-12 gap-8&quot;&gt;
+            &lt;!-- Left: Image Analysis &amp; Input --&gt;
+            &lt;div class=&quot;lg:col-span-7 space-y-6&quot;&gt;
+                &lt;div class=&quot;bg-white p-6 rounded-xl shadow-sm border border-slate-200&quot;&gt;
+                    &lt;div class=&quot;flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4&quot;&gt;
+                        &lt;div class=&quot;flex flex-wrap gap-2&quot;&gt;
+                            &lt;button onclick=&quot;switchSlot(0)&quot; id=&quot;slotBtn0&quot; class=&quot;slot-btn active px-4 py-2 border rounded-lg text-sm font-bold transition&quot;&gt;10<font face="NSimSun, monospace"><span lang="zh-CN">분 사진</span></font>&lt;/button&gt;
+                            &lt;button onclick=&quot;switchSlot(1)&quot; id=&quot;slotBtn1&quot; class=&quot;slot-btn px-4 py-2 border rounded-lg text-sm font-bold transition&quot;&gt;15<font face="NSimSun, monospace"><span lang="zh-CN">분 사진</span></font>&lt;/button&gt;
+                            &lt;button onclick=&quot;switchSlot(2)&quot; id=&quot;slotBtn2&quot; class=&quot;slot-btn px-4 py-2 border rounded-lg text-sm font-bold transition&quot;&gt;20<font face="NSimSun, monospace"><span lang="zh-CN">분 사진</span></font>&lt;/button&gt;
+                            &lt;button onclick=&quot;switchSlot(3)&quot; id=&quot;slotBtn3&quot; class=&quot;slot-btn px-4 py-2 border rounded-lg text-sm font-bold transition&quot;&gt;24<font face="NSimSun, monospace"><span lang="zh-CN">시간 사진</span></font>&lt;/button&gt;
+                        &lt;/div&gt;
+                        &lt;div class=&quot;flex gap-2&quot;&gt;
+                            &lt;input type=&quot;file&quot; id=&quot;imageInput&quot; accept=&quot;image/*&quot; class=&quot;hidden&quot;&gt;
+                            &lt;label for=&quot;imageInput&quot; class=&quot;bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer transition text-sm shadow-sm font-bold&quot;&gt;
+                                <font face="NSimSun, monospace"><span lang="zh-CN">사진 불러오기</span></font>
+                            &lt;/label&gt;
+                            &lt;button id=&quot;clearBoxes&quot; class=&quot;text-sm text-rose-600 hover:text-rose-800 font-medium px-2&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">초기화</span></font>&lt;/button&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+
+                    &lt;div id=&quot;canvas-container&quot;&gt;
+                        &lt;div id=&quot;placeholder&quot; class=&quot;text-slate-400 text-sm italic&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">해당 시간의 사진을 불러와주세요</span></font>&lt;/div&gt;
+                        &lt;canvas id=&quot;imageCanvas&quot; class=&quot;hidden&quot;&gt;&lt;/canvas&gt;
+                        &lt;div id=&quot;tempBox&quot; class=&quot;temp-selection hidden&quot;&gt;&lt;/div&gt;
+                        &lt;div id=&quot;fixedBoxesContainer&quot;&gt;&lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;bg-white p-6 rounded-xl shadow-sm border border-slate-200&quot;&gt;
+                    &lt;h2 class=&quot;text-xl font-semibold mb-4 text-slate-700&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">데이터 기록 도구</span></font>&lt;/h2&gt;
+                    &lt;div class=&quot;grid grid-cols-1 md:grid-cols-5 gap-4 items-end&quot;&gt;
+                        &lt;div class=&quot;md:col-span-1&quot;&gt;
+                            &lt;label class=&quot;block text-sm font-medium text-slate-700&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">용액 종류</span></font>&lt;/label&gt;
+                            &lt;select id=&quot;solutionSelect&quot; class=&quot;mt-1 block w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 bg-white&quot;&gt;
+                                &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">증류수</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">증류수</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">주방세제</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">주방세제</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">베이킹소다</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">베이킹소다</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">과탄산수소</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">과탄산수소</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">세탁세제</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">세탁세제</span></font>&lt;/option&gt;
+                            &lt;/select&gt;
+                        &lt;/div&gt;
+                        &lt;div&gt;
+                            &lt;label class=&quot;block text-sm font-medium text-slate-700&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">기록할 시간</span></font>&lt;/label&gt;
+                            &lt;select id=&quot;timeSelect&quot; class=&quot;mt-1 block w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 font-bold bg-slate-50&quot;&gt;
+                                &lt;option value=&quot;10<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&quot;&gt;10<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;15<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&quot;&gt;15<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;20<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&quot;&gt;20<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&lt;/option&gt;
+                                &lt;option value=&quot;24<font face="NSimSun, monospace"><span lang="zh-CN">시간</span></font>&quot;&gt;24<font face="NSimSun, monospace"><span lang="zh-CN">시간</span></font>&lt;/option&gt;
+                            &lt;/select&gt;
+                        &lt;/div&gt;
+                        &lt;div class=&quot;md:col-span-2&quot;&gt;
+                            &lt;label class=&quot;block text-sm font-medium text-slate-700&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">현재 추출 </span></font>RGB (R<font face="NSimSun, monospace"><span lang="zh-CN">값</span></font>)&lt;/label&gt;
+                            &lt;div class=&quot;flex gap-2 mt-1&quot;&gt;
+                                &lt;div id=&quot;rDisplay&quot; class=&quot;flex-1 bg-slate-100 p-2 rounded text-center font-mono text-sm border-b-4 border-rose-500 text-rose-700 font-bold&quot;&gt;R: 0&lt;/div&gt;
+                                &lt;div id=&quot;gDisplay&quot; class=&quot;flex-1 bg-slate-100 p-2 rounded text-center font-mono text-sm border-b-4 border-emerald-500 text-emerald-700 font-bold&quot;&gt;G: 0&lt;/div&gt;
+                                &lt;div id=&quot;bDisplay&quot; class=&quot;flex-1 bg-slate-100 p-2 rounded text-center font-mono text-sm border-b-4 border-blue-500 text-blue-700 font-bold&quot;&gt;B: 0&lt;/div&gt;
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                        &lt;button id=&quot;addRecord&quot; class=&quot;bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition h-12 shadow-md font-bold text-sm&quot;&gt;
+                            <font face="NSimSun, monospace"><span lang="zh-CN">결과 저장</span></font>
+                        &lt;/button&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Right: Results Dashboard --&gt;
+            &lt;div class=&quot;lg:col-span-5 space-y-6&quot;&gt;
+                &lt;!-- Data Table --&gt;
+                &lt;div class=&quot;bg-white p-6 rounded-xl shadow-sm border border-slate-200&quot;&gt;
+                    &lt;div class=&quot;flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3&quot;&gt;
+                        &lt;h2 class=&quot;text-xl font-semibold text-rose-700&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">실험 결과 비교</span></font>&lt;/h2&gt;
+                        &lt;select id=&quot;filterSolution&quot; class=&quot;text-[10px] border border-slate-300 rounded p-1 bg-slate-50 outline-none&quot;&gt;
+                            &lt;option value=&quot;all&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">모든 용액</span></font>&lt;/option&gt;
+                            &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">증류수</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">증류수</span></font>&lt;/option&gt;
+                            &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">주방세제</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">주방세제</span></font>&lt;/option&gt;
+                            &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">베이킹소다</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">베이킹소다</span></font>&lt;/option&gt;
+                            &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">과탄산수소</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">과탄산수소</span></font>&lt;/option&gt;
+                            &lt;option value=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">세탁세제</span></font>&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">세탁세제</span></font>&lt;/option&gt;
+                        &lt;/select&gt;
+                    &lt;/div&gt;
+                    
+                    &lt;div class=&quot;overflow-x-auto border rounded-lg&quot;&gt;
+                        &lt;table class=&quot;w-full text-[11px] border-collapse&quot;&gt;
+                            &lt;thead&gt;
+                                &lt;tr class=&quot;bg-slate-100 border-b border-slate-200&quot;&gt;
+                                    &lt;th class=&quot;py-3 px-2 text-left border-r border-slate-200&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">용액 종류</span></font>&lt;/th&gt;
+                                    &lt;th class=&quot;py-3 px-1 data-cell&quot;&gt;10<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&lt;/th&gt;
+                                    &lt;th class=&quot;py-3 px-1 data-cell&quot;&gt;15<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&lt;/th&gt;
+                                    &lt;th class=&quot;py-3 px-1 data-cell&quot;&gt;20<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>&lt;/th&gt;
+                                    &lt;th class=&quot;py-3 px-1 data-cell border-r&quot;&gt;24<font face="NSimSun, monospace"><span lang="zh-CN">시간</span></font>&lt;/th&gt;
+                                    &lt;th class=&quot;py-3 px-2 text-center&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">삭제</span></font>&lt;/th&gt;
+                                &lt;/tr&gt;
+                            &lt;/thead&gt;
+                            &lt;tbody id=&quot;horizontalTableBody&quot;&gt;&lt;/tbody&gt;
+                        &lt;/table&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+
+                &lt;!-- Trend Chart --&gt;
+                &lt;div class=&quot;bg-white p-6 rounded-xl shadow-sm border border-slate-200&quot;&gt;
+                    &lt;h2 class=&quot;text-xl font-semibold mb-4 text-slate-700&quot;&gt;<font face="NSimSun, monospace"><span lang="zh-CN">추출 데이터 시각화 </span></font>(R<font face="NSimSun, monospace"><span lang="zh-CN">값</span></font>)&lt;/h2&gt;
+                    &lt;canvas id=&quot;resultChart&quot;&gt;&lt;/canvas&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        const imageInput = document.getElementById('imageInput');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const tempBox = document.getElementById('tempBox');
+        const fixedBoxesContainer = document.getElementById('fixedBoxesContainer');
+        const placeholder = document.getElementById('placeholder');
+        const rDisplay = document.getElementById('rDisplay');
+        const gDisplay = document.getElementById('gDisplay');
+        const bDisplay = document.getElementById('bDisplay');
+        const timeSelect = document.getElementById('timeSelect');
+        const horizontalTableBody = document.getElementById('horizontalTableBody');
+        const filterSolution = document.getElementById('filterSolution');
+
+        const timeOrder = ['10<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>', '15<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>', '20<font face="NSimSun, monospace"><span lang="zh-CN">분</span></font>', '24<font face="NSimSun, monospace"><span lang="zh-CN">시간</span></font>'];
+        const solutionOrder = ['<font face="NSimSun, monospace"><span lang="zh-CN">증류수</span></font>', '<font face="NSimSun, monospace"><span lang="zh-CN">주방세제</span></font>', '<font face="NSimSun, monospace"><span lang="zh-CN">베이킹소다</span></font>', '<font face="NSimSun, monospace"><span lang="zh-CN">과탄산수소</span></font>', '<font face="NSimSun, monospace"><span lang="zh-CN">세탁세제</span></font>'];
+        const solutionColors = {
+            '<font face="NSimSun, monospace"><span lang="zh-CN">증류수</span></font>': '#64748b', '<font face="NSimSun, monospace"><span lang="zh-CN">주방세제</span></font>': '#0ea5e9', '<font face="NSimSun, monospace"><span lang="zh-CN">베이킹소다</span></font>': '#f59e0b',
+            '<font face="NSimSun, monospace"><span lang="zh-CN">과탄산수소</span></font>': '#8b5cf6', '<font face="NSimSun, monospace"><span lang="zh-CN">세탁세제</span></font>': '#be123c'
+        };
+
+        // State Management
+        let currentSlot = 0;
+        const slots = [
+            { img: null, boxes: [] },
+            { img: null, boxes: [] },
+            { img: null, boxes: [] },
+            { img: null, boxes: [] }
+        ];
+
+        let experimentData = [];
+        let currentRGB = { r: 0, g: 0, b: 0 };
+        let isDragging = false;
+        let startX, startY;
+
+        // Chart Init
+        const chartCtx = document.getElementById('resultChart').getContext('2d');
+        const resultChart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: timeOrder,
+                datasets: solutionOrder.map(name =&gt; ({
+                    label: name,
+                    data: [null, null, null, null],
+                    borderColor: solutionColors[name],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.2,
+                    pointRadius: 4
+                }))
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
+                scales: {
+                    y: { reverse: true, title: { display: true, text: 'R <font face="NSimSun, monospace"><span lang="zh-CN">값 </span></font>(<font face="NSimSun, monospace"><span lang="zh-CN">낮을수록 투과성 높음</span></font>)' } },
+                    x: { title: { display: true, text: '<font face="NSimSun, monospace"><span lang="zh-CN">실험 시간</span></font>' } }
+                }
+            }
+        });
+
+        function switchSlot(index) {
+            currentSlot = index;
+            document.querySelectorAll('.slot-btn').forEach((btn, idx) =&gt; {
+                btn.classList.toggle('active', idx === index);
+            });
+            
+            // <font face="NSimSun, monospace"><span lang="zh-CN">탭 이름에 맞춰 하단 시간 선택 박스도 자동 변경</span></font>
+            timeSelect.value = timeOrder[index];
+            
+            renderCanvas();
+        }
+
+        function renderCanvas() {
+            const slot = slots[currentSlot];
+            fixedBoxesContainer.innerHTML = '';
+            
+            if (!slot.img) {
+                canvas.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                rDisplay.innerText = 'R: 0'; gDisplay.innerText = 'G: 0'; bDisplay.innerText = 'B: 0';
+                return;
+            }
+
+            canvas.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            
+            const maxWidth = 800;
+            const scale = maxWidth / slot.img.width;
+            canvas.width = maxWidth;
+            canvas.height = slot.img.height * scale;
+            ctx.drawImage(slot.img, 0, 0, canvas.width, canvas.height);
+
+            slot.boxes.forEach(box =&gt; {
+                const boxEl = document.createElement('div');
+                boxEl.className = 'fixed-selection';
+                boxEl.style.left = box.x + 'px'; boxEl.style.top = box.y + 'px'; 
+                boxEl.style.width = box.w + 'px'; boxEl.style.height = box.h + 'px';
+                boxEl.style.borderColor = solutionColors[box.solution];
+                const label = document.createElement('div');
+                label.className = 'selection-label';
+                label.style.backgroundColor = solutionColors[box.solution];
+                label.innerText = box.solution;
+                boxEl.appendChild(label);
+                fixedBoxesContainer.appendChild(boxEl);
+            });
+        }
+
+        imageInput.addEventListener('change', (e) =&gt; {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) =&gt; {
+                const img = new Image();
+                img.onload = () =&gt; {
+                    slots[currentSlot].img = img;
+                    slots[currentSlot].boxes = [];
+                    renderCanvas();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        canvas.addEventListener('mousedown', (e) =&gt; {
+            if (!slots[currentSlot].img) return;
+            isDragging = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            tempBox.classList.remove('hidden');
+            tempBox.style.left = startX + 'px';
+            tempBox.style.top = startY + 'px';
+            tempBox.style.width = '0px';
+            tempBox.style.height = '0px';
+            tempBox.style.borderColor = solutionColors[document.getElementById('solutionSelect').value];
+        });
+
+        window.addEventListener('mousemove', (e) =&gt; {
+            if (!isDragging) return;
+            const rect = canvas.getBoundingClientRect();
+            const currentX = Math.max(0, Math.min(e.clientX - rect.left, canvas.width));
+            const currentY = Math.max(0, Math.min(e.clientY - rect.top, canvas.height));
+            const width = currentX - startX;
+            const height = currentY - startY;
+            const l = (width &gt; 0 ? startX : currentX);
+            const t = (height &gt; 0 ? startY : currentY);
+            const w = Math.abs(width);
+            const h = Math.abs(height);
+            tempBox.style.width = w + 'px';
+            tempBox.style.height = h + 'px';
+            tempBox.style.left = l + 'px';
+            tempBox.style.top = t + 'px';
+            
+            if (w &gt; 2 &amp;&amp; h &gt; 2) {
+                const imageData = ctx.getImageData(l, t, w, h);
+                const data = imageData.data;
+                let rS = 0, gS = 0, bS = 0;
+                for (let i = 0; i &lt; data.length; i += 4) {
+                    rS += data[i]; gS += data[i+1]; bS += data[i+2];
+                }
+                const cnt = data.length / 4;
+                currentRGB = { r: Math.round(rS / cnt), g: Math.round(gS / cnt), b: Math.round(bS / cnt) };
+                rDisplay.innerText = `R: ${currentRGB.r}`;
+                gDisplay.innerText = `G: ${currentRGB.g}`;
+                bDisplay.innerText = `B: ${currentRGB.b}`;
+            }
+        });
+
+        window.addEventListener('mouseup', () =&gt; {
+            if (!isDragging) return;
+            isDragging = false;
+            const w = parseFloat(tempBox.style.width), h = parseFloat(tempBox.style.height);
+            if (w &gt; 5 &amp;&amp; h &gt; 5) {
+                const sol = document.getElementById('solutionSelect').value;
+                slots[currentSlot].boxes = slots[currentSlot].boxes.filter(b =&gt; b.solution !== sol);
+                slots[currentSlot].boxes.push({
+                    x: parseFloat(tempBox.style.left),
+                    y: parseFloat(tempBox.style.top),
+                    w, h, solution: sol
+                });
+                renderCanvas();
+            }
+            tempBox.classList.add('hidden');
+        });
+
+        document.getElementById('clearBoxes').addEventListener('click', () =&gt; {
+            slots[currentSlot].boxes = [];
+            renderCanvas();
+        });
+
+        document.getElementById('addRecord').addEventListener('click', () =&gt; {
+            if (currentRGB.r === 0) return alert('<font face="NSimSun, monospace"><span lang="zh-CN">이미지에서 추출 영역을 선택해주세요</span></font>.');
+            const time = timeSelect.value;
+            const sol = document.getElementById('solutionSelect').value;
+            const idx = experimentData.findIndex(d =&gt; d.solution === sol &amp;&amp; d.time === time);
+            if (idx &gt; -1) experimentData[idx] = { solution: sol, time, ...currentRGB };
+            else experimentData.push({ solution: sol, time, ...currentRGB });
+            updateUI();
+        });
+
+        function deleteSingleEntry(sol, time) {
+            experimentData = experimentData.filter(d =&gt; !(d.solution === sol &amp;&amp; d.time === time));
+            updateUI();
+        }
+
+        function deleteRow(sol) {
+            experimentData = experimentData.filter(d =&gt; d.solution !== sol);
+            updateUI();
+        }
+
+        filterSolution.addEventListener('change', updateUI);
+
+        function updateUI() {
+            horizontalTableBody.innerHTML = '';
+            const solFilter = filterSolution.value;
+            solutionOrder.forEach(solName =&gt; {
+                if (solFilter !== 'all' &amp;&amp; solFilter !== solName) return;
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-slate-50 transition';
+                let html = `&lt;td class=&quot;py-3 px-2 border-r font-bold bg-slate-50/50&quot; style=&quot;color:${solutionColors[solName]}&quot;&gt;${solName}&lt;/td&gt;`;
+                timeOrder.forEach(timeLabel =&gt; {
+                    const data = experimentData.find(d =&gt; d.solution === solName &amp;&amp; d.time === timeLabel);
+                    if (data) {
+                        html += `&lt;td class=&quot;data-cell p-0&quot;&gt;&lt;span class=&quot;data-value font-mono text-rose-600 font-bold bg-rose-50/40&quot; onclick=&quot;deleteSingleEntry('${solName}', '${timeLabel}')&quot; title=&quot;<font face="NSimSun, monospace"><span lang="zh-CN">개별 삭제</span></font>&quot;&gt;${data.r}&lt;/span&gt;&lt;/td&gt;`;
+                    } else {
+                        html += `&lt;td class=&quot;data-cell text-slate-300&quot;&gt;-&lt;/td&gt;`;
+                    }
+                });
+                html += `&lt;td class=&quot;py-2 px-2 text-center border-l&quot;&gt;&lt;button onclick=&quot;deleteRow('${solName}')&quot; class=&quot;text-slate-300 hover:text-rose-600 transition&quot;&gt;✕&lt;/button&gt;&lt;/td&gt;`;
+                row.innerHTML = html;
+                horizontalTableBody.appendChild(row);
+            });
+
+            resultChart.data.datasets.forEach(dataset =&gt; {
+                dataset.hidden = solFilter !== 'all' &amp;&amp; dataset.label !== solFilter;
+                dataset.data = timeOrder.map(label =&gt; {
+                    const match = experimentData.find(d =&gt; d.solution === dataset.label &amp;&amp; d.time === label);
+                    return match ? match.r : null;
+                });
+            });
+            resultChart.update();
+        }
+
+        window.switchSlot = switchSlot;
+        window.deleteSingleEntry = deleteSingleEntry;
+        window.deleteRow = deleteRow;
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</body>
+</html>
